@@ -79,6 +79,10 @@ class DataPreprocessor:
         self.normalization()
 
 if __name__ == '__main__':
+    # data = pd.read_csv('../data/video_games.csv')
+    # print(data.head(10))
     preprocessor = DataPreprocessor('../data/video_games.csv')
     preprocessor.preprocess()
     print(preprocessor.df)
+    # cleaned_data = preprocessor.df()
+    # return cleaned_data
