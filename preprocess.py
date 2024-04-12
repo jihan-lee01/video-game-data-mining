@@ -84,5 +84,3 @@ if __name__ == '__main__':
     preprocessor = DataPreprocessor('../data/video_games.csv')
     preprocessor.preprocess()
     print(preprocessor.df)
-    # cleaned_data = preprocessor.df()
-    # return cleaned_data
