@@ -167,7 +167,7 @@ def clf_eval(model, X_test, y_test):
 
 def reg_tuning(model, param_grid, X_train, y_train, X_test, y_test):
     grid_search = GridSearchCV(
-        estimator=model, param_grid=param_grid, cv=10, scoring='neg_mean_squared_error')
+        estimator=model, param_grid=param_grid, cv=5, scoring='neg_mean_squared_error')
     grid_search.fit(X_train, y_train)
 
     best_model = grid_search.best_estimator_
