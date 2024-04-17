@@ -18,7 +18,7 @@ from xgboost import XGBClassifier, XGBRegressor
 
 
 def import_data():
-    return pd.read_csv("/Users/jihan/Desktop/cs-470-project/data/video_games.csv")
+    return pd.read_csv("../data/video_games.csv")
 
 
 def preprocessing(df):
