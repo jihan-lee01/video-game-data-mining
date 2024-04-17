@@ -156,7 +156,7 @@ def clf_eval(model, X_test, y_test):
         "F1": f1_score(y_test, y_pred),
         "ROC AUC": roc_auc_score(y_test, y_pred_prob),
         "Precision": precision_score(y_test, y_pred),
-        "Recall": precision_score(y_test, y_pred)
+        "Recall": recall_score(y_test, y_pred)
     }
     roc = {
         "fpr": fpr,
