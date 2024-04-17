@@ -6,11 +6,13 @@ import pandas as pd
 import seaborn as sns
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.impute import SimpleImputer
+from sklearn.inspection import permutation_importance
 from sklearn.linear_model import (Lasso, LinearRegression, LogisticRegression,
                                   Ridge)
 from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score,
-                             mean_absolute_error, mean_squared_error, r2_score,
-                             roc_auc_score)
+                             mean_absolute_error, mean_squared_error,
+                             precision_score, r2_score, recall_score,
+                             roc_auc_score, roc_curve)
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
@@ -18,7 +20,7 @@ from xgboost import XGBClassifier, XGBRegressor
 
 
 def import_data():
-    return pd.read_csv("../data/video_games.csv")
+    return pd.read_csv("data/video_games.csv")
 
 
 def preprocessing(df):
@@ -129,7 +131,7 @@ def discretize_y(y):
 
 
 def classification(X_train, y_train):
-    logit = LogisticRegression()
+    logit = LogisticRegression(penalty='l1', solver='saga')
     logit.fit(X_train, y_train)
 
     dt = DecisionTreeClassifier()
@@ -147,12 +149,20 @@ def classification(X_train, y_train):
 def clf_eval(model, X_test, y_test):
     y_pred = model.predict(X_test)
     y_pred_prob = model.predict_proba(X_test)[:, 1]
+    fpr, tpr, _ = roc_curve(y_test, y_pred_prob)
+
     metrics = {
         "Accuracy": accuracy_score(y_test, y_pred),
         "F1": f1_score(y_test, y_pred),
-        "ROC AUC": roc_auc_score(y_test, y_pred_prob)
+        "ROC AUC": roc_auc_score(y_test, y_pred_prob),
+        "Precision": precision_score(y_test, y_pred),
+        "Recall": precision_score(y_test, y_pred)
     }
-    return metrics
+    roc = {
+        "fpr": fpr,
+        "tpr": tpr
+    }
+    return metrics, roc, confusion_matrix(y_test, y_pred)
 
 
 def reg_tuning(model, param_grid, X_train, y_train, X_test, y_test):
@@ -223,6 +233,20 @@ def get_param_grid(model_name):
     return param_grid
 
 
+def get_feature_importance(model, X_train, y_train):
+    importances = model.feature_importances_
+    perm_importances = permutation_importance(
+        model, X_train, y_train).importances_mean
+
+    imp_indices = np.argsort(importances)[::-1]
+    top10_imp_indices = imp_indices[:10]
+
+    perm_indices = np.argsort(perm_importances)[::-1]
+    top10_perm_indices = perm_indices[:10]
+
+    return importances[top10_imp_indices], perm_importances[top10_perm_indices]
+
+
 def main():
     df = import_data()
 
@@ -290,11 +314,24 @@ def main():
 
     print("---Evaluating Classification Models---")
     clf_result = {}
+    roc_result = {}
+    matrix_result = {}
     for model in clf_models:
-        clf_result[model.__class__.__name__] = clf_eval(model, X_test, y1_test)
+        metrics, roc, matrix = clf_eval(model, X_test, y1_test)
+        clf_result[model.__class__.__name__] = metrics
+        roc_result[model.__class__.__name__] = roc
+        matrix_result[model.__class__.__name__] = matrix
 
     clf_result_df = pd.DataFrame(clf_result)
     print(clf_result_df)
+
+    imp_result = {}
+    perm_result = {}
+    for model in clf_models[1:]:
+        importances, perm_importances = get_feature_importance(
+            model, X_train, y1_train)
+        imp_result[model.__class__.__name__] = importances
+        perm_result[model.__class__.__name__] = perm_importances
 
 
 if __name__ == "__main__":
